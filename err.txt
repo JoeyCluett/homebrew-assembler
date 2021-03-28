@@ -1,0 +1,9 @@
+In file 'examples/helloworld.txt'
+
+  state_word : invalid token value 'unknowntoken'
+  Ln 30, Col 22
+  code:
+
+    sign_ext r2, r1  unknowntoken                               
+                     ^
+
