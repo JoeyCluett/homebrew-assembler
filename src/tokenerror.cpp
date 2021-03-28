@@ -24,8 +24,9 @@ void generate_tokenizer_error(
             break;
 
         switch(c) {
-            case '\n':
             case '\r':
+                break;
+            case '\n':
                 row++;
                 col = 0;
                 row_offsets.push_back( (iter + 1) - src.begin() );
