@@ -1,9 +1,6 @@
-#include <inc/tokenerror.h>
+#include <inc/parsererror.h>
 
-#include <iostream>
-#include <vector>
-
-void generate_tokenizer_error(
+void generate_parser_error(
         std::vector<char>& src, 
         long int offset, 
         std::string message, 
@@ -40,7 +37,7 @@ void generate_tokenizer_error(
     }
 
     if(filename != "") {
-        std::cout << "\n (TokenizeException) In file '" << filename << "'\n";
+        std::cout << "\n (ParseException) In file '" << filename << "'\n";
     }
     std::cout << " Ln " << (row + 1) << ", Col " << (col + 1) << "\n"; 
 
@@ -58,5 +55,6 @@ void generate_tokenizer_error(
     for(long int i = 0; i < empty_spaces; i++)
         std::cout << ' ';
     std::cout << "^\n\n";
+
 
 }

@@ -10,7 +10,7 @@
 #    zero rN == xor rN, rN
 #
 
-    nop       # alias for 'or r0, r0'
+    nop       # alias for 'mov r0, r0'
     zero r5   # expands to 'xor r5, r5'
 
     add r0,  r12   # r0  = r0  + r12
@@ -27,7 +27,7 @@
     rsh r13, r0    # r13 = r0  >> 1
 
 
-    sign_ext r2, r1  unknowntoken   # sign extend r1.LSB into r2
+    sign_ext r2, r1  # sign extend r1.LSB into r2
     sx r2, r1        # sign extend r1.LSB into r2 (alias of sign_ext)
     zero_ext r8, r2  # zero extend r2.LSB into r8
     zx r8, r2        # zero extend r2.LSB into r8 (alias of zero_ext)
@@ -51,10 +51,10 @@
 
 #
 # flags:
-#     Zero      (Z)
 #     Carry out (C)
-#     Equals    (E)
+#     Zero      (Z)
 #     oVerflow  (V)
+#     Equals    (E)
 #
 
-    jmp .ZC @file_end  # jump to @file_end if Zero or Carry flag is asserted
+    jmp .ZC @file_end                  random  # jump to @file_end if Zero or Carry flag is asserted

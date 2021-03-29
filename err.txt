@@ -1,9 +1,33 @@
-In file 'examples/helloworld.txt'
+LabelSpec     @start
+Instruction   mov
+OpenBracket   [
+Register      r15
+CloseBracket  ]
+Comma         ,
+Register      r1
+Instruction   mov
+Register      r1
+Comma         ,
+OpenBracket   [
+Register      r15
+CloseBracket  ]
+Instruction   sub
+Register      r1
+Comma         ,
+Instruction   jmp
+LabelSpec     @start
+NumberDec     12345678
+Instruction   mov
+Register      r6
+Comma         ,
+NumberBin     0b110101000111010101001
 
-  state_word : invalid token value 'unknowntoken'
-  Ln 30, Col 22
+ In file 'examples/memoryops.txt'
+ Ln 14, Col 29
+
+  state_num_hex : invalid char 'g' in hexadecimal number
   code:
 
-    sign_ext r2, r1  unknowntoken                               
-                     ^
+    0x0000000000021342349adcgffdd7cda3
+                            ^
 

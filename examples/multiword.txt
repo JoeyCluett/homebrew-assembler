@@ -1,0 +1,8 @@
+
+add r6, 255
+add r6, 0xFF
+add r6, 0b11111111
+
+add .byte r15, 123
+
+#or r0, r0
