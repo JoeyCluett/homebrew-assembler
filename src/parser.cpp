@@ -59,6 +59,41 @@ static long int convert_dec_string(const std::string& s) {
     return std::stol(s);
 }
 
+static long int convert_string_to_long(std::vector<char>& src, const token_t& tok) {
+    std::string s = tok.str(src);
+    long int val = -1;
+
+    switch(tok.type) {
+        case token_number_ord:
+            val = convert_dec_string(s);
+            break;
+        case token_number_hex:
+            val = convert_hex_string(s);
+            break;
+        case token_number_bin:
+            val = convert_bin_string(s);
+            break;
+    }
+
+    if(val > 255) {
+        throw ParseException({
+            "parse_add : token '" + tok.str(src) + "' of type '" + tok.typestr() + 
+            "' is out of range (0 - 255). Numeric value is " + std::to_string(val) + ".",
+            tok.idxstart
+        });
+    }
+    else {
+        return val;
+    }
+}
+
+static bool token_is_number_type(const token_t& tok) {
+    return
+        tok.type == token_number_ord || 
+        tok.type == token_number_hex || 
+        tok.type == token_number_bin;
+}
+
 // functions return true when full instruction is parsed out
 static bool parse_add(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
 static bool parse_adc(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
@@ -152,7 +187,12 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
         //    if(parse_or(gir, src, tok, pir)) { state_current = state_default; }
 
         default:
-            throw std::runtime_error("consume_token : unknown internal error");
+            //throw std::runtime_error("consume_token : unknown internal error");
+            throw ParseException({
+                "consume_token : Unknown internal error. Last token received was '" + 
+                tok.str(src) + "' of type '" + tok.typestr() + "'.",
+                tok.idxstart
+            });
     }
 
 }
@@ -246,53 +286,12 @@ static bool parse_add(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 state_current = state_reg_or_bytespec;
                 return true;
             }
-            else if(tok.type == token_number_ord) {
-                long int val = convert_dec_string(tok.str(src));
-                if(val > 255) {
-                    throw ParseException({
-                        "parse_add : token '" + tok.str(src) + "' of type '" + tok.typestr() + 
-                        "' is out of range (0 - 255). Numeric value is " + std::to_string(val) + ".",
-                        tok.idxstart
-                    });
-                }
-                else {
-                    pir.alu_std.imm = (int)(val & 0xFF);
-                    pir.alu_std.op  = PARSE_INTERNAL_ALU_OP_ADD_IMM8;
-                    state_current = state_reg_or_bytespec;
-                    return true;
-                }
-            }
-            else if(tok.type == token_number_bin) {
-                long int val = convert_bin_string(tok.str(src));
-                if(val > 255) {
-                    throw ParseException({
-                        "parse_add : token '" + tok.str(src) + "' of type '" + tok.typestr() + 
-                        "' is out of range (0 - 255). Numeric value is " + std::to_string(val) + ".",
-                        tok.idxstart
-                    });
-                }
-                else {
-                    pir.alu_std.imm = (int)(val & 0xFF);
-                    pir.alu_std.op  = PARSE_INTERNAL_ALU_OP_ADD_IMM8;
-                    state_current = state_reg_or_bytespec;
-                    return true;
-                }
-            }
-            else if(tok.type == token_number_hex) {
-                long int val = convert_hex_string(tok.str(src));
-                if(val > 255) {
-                    throw ParseException({
-                        "parse_add : token '" + tok.str(src) + "' of type '" + tok.typestr() + 
-                        "' is out of range (0 - 255). Numeric value is " + std::to_string(val) + ".",
-                        tok.idxstart
-                    });
-                }
-                else {
-                    pir.alu_std.imm = (int)(val & 0xFF);
-                    pir.alu_std.op  = PARSE_INTERNAL_ALU_OP_ADD_IMM8;
-                    state_current = state_reg_or_bytespec;
-                    return true;
-                }
+            else if(token_is_number_type(tok)) {
+                long int val = convert_string_to_long(src, tok);
+                pir.alu_std.imm = (int)(val & 0xFF);
+                pir.alu_std.op  = PARSE_INTERNAL_ALU_OP_ADD_IMM8;
+                state_current = state_reg_or_bytespec;
+                return true;
             }
             else {
                 throw ParseException({

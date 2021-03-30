@@ -24,8 +24,8 @@ struct token_t {
     int idxstart;
     int idxend;
 
-    std::string str(std::vector<char>& src);
-    std::string typestr(void);
+    std::string str(std::vector<char>& src) const;
+    std::string typestr(void) const;
 };
 
 token_t get_token(std::vector<char>& src, std::vector<char>::iterator& iter);

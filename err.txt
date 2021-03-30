@@ -1,33 +1,10 @@
-LabelSpec     @start
-Instruction   mov
-OpenBracket   [
-Register      r15
-CloseBracket  ]
-Comma         ,
-Register      r1
-Instruction   mov
-Register      r1
-Comma         ,
-OpenBracket   [
-Register      r15
-CloseBracket  ]
-Instruction   sub
-Register      r1
-Comma         ,
-Instruction   jmp
-LabelSpec     @start
-NumberDec     12345678
-Instruction   mov
-Register      r6
-Comma         ,
-NumberBin     0b110101000111010101001
 
- In file 'examples/memoryops.txt'
- Ln 14, Col 29
+ (ParseException) In file 'examples/multiword.txt'
+ Ln 6, Col 16
 
-  state_num_hex : invalid char 'g' in hexadecimal number
+  parse_add : token '123' is invalid for add instruction with '.byte' modifier. Immediates are only valid for 16-bit operands.
   code:
 
-    0x0000000000021342349adcgffdd7cda3
-                            ^
+add .byte r15, 123
+               ^
 

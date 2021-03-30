@@ -8,7 +8,7 @@
 #include <inc/register_defs.h>
 #include <inc/tokenerror.h>
 
-std::string token_t::str(std::vector<char>& src) {
+std::string token_t::str(std::vector<char>& src) const {
     char* srcptr = src.data();
 
     return std::string( 
@@ -16,7 +16,7 @@ std::string token_t::str(std::vector<char>& src) {
             srcptr + this->idxend);
 }
 
-std::string token_t::typestr(void) {
+std::string token_t::typestr(void) const {
     switch(this->type) {
         case token_register:    return "Register";
         case token_instruction: return "Instruction";
