@@ -6,7 +6,7 @@
 #include <inc/tokenize.h>
 #include <inc/mnemonics.h>
 #include <inc/register_defs.h>
-#include <inc/tokenerror.h>
+#include <inc/assemblererror.h>
 
 std::string token_t::str(std::vector<char>& src) const {
     char* srcptr = src.data();

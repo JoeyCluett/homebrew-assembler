@@ -1,6 +1,12 @@
-#include <inc/parsererror.h>
+#include <iostream>
+#include <string>
+#include <vector>
 
-void generate_parser_error(
+#include <inc/assemblererror.h>
+#include <iostream>
+
+void generate_assembler_error(
+        const std::string& error_type, 
         std::vector<char>& src, 
         long int offset, 
         std::string message, 
@@ -36,9 +42,8 @@ void generate_parser_error(
         iter++;
     }
 
-    if(filename != "") {
-        std::cout << "\n (ParseException) In file '" << filename << "'\n";
-    }
+
+    std::cout << "\n (" << error_type << ")\n In file '" << filename << "'\n";
     std::cout << " Ln " << (row + 1) << ", Col " << (col + 1) << "\n"; 
 
     std::cout << std::endl << "  " << message << std::endl;

@@ -6,11 +6,10 @@
 #include <algorithm>
 
 #include <inc/tokenize.h>
-#include <inc/tokenerror.h>
+#include <inc/assemblererror.h>
 #include <inc/parser.h>
 #include <inc/mnemonics.h>
 #include <inc/register_defs.h>
-#include <inc/parsererror.h>
 
 static long int convert_bin_string(const std::string& s) {
     std::string t = s.substr(2);
@@ -262,8 +261,7 @@ static bool parse_add(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
             }
             break;
         case state_reg_or_number:
-
-            if(tok.type == token_number_bin || tok.type == token_number_hex || tok.type == token_number_ord) {
+            if(token_is_number_type(tok)) {
                 if(pir.type == PARSE_TYPE_ALU_TR) {
                     throw ParseException({
                         "parse_add : token '" + tok.str(src) + "' is invalid for add instruction with '.byte' "
@@ -283,14 +281,18 @@ static bool parse_add(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                     pir.alu_std.rs = rs; 
                     pir.alu_std.op = PARSE_INTERNAL_ALU_OP_ADD_RR;
                 }
+
                 state_current = state_reg_or_bytespec;
+                gir.ir.push_back(pir);
                 return true;
             }
             else if(token_is_number_type(tok)) {
                 long int val = convert_string_to_long(src, tok);
                 pir.alu_std.imm = (int)(val & 0xFF);
                 pir.alu_std.op  = PARSE_INTERNAL_ALU_OP_ADD_IMM8;
+
                 state_current = state_reg_or_bytespec;
+                gir.ir.push_back(pir);
                 return true;
             }
             else {

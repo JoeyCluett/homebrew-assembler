@@ -3,9 +3,8 @@
 
 #include "inc/preprocess.h"
 #include "inc/tokenize.h"
-#include "inc/tokenerror.h"
 #include "inc/parser.h"
-#include "inc/parsererror.h"
+#include "inc/assemblererror.h"
 
 using namespace std;
 
@@ -42,13 +41,15 @@ int main(int argc, char* argv[]) {
             }
 
         } catch(ParseException& pe) {
-            generate_parser_error(vchar, pe.offset, pe.message, filename);
+            generate_assembler_error("ParseException", vchar, pe.offset, pe.message, filename);
             return 1;
         }
     } catch(TokenizeException& te) {
-        generate_tokenizer_error(vchar, te.offset, te.message, filename);
+        generate_assembler_error("TokenizeException", vchar, te.offset, te.message, filename);
         return 1;
     }
+
+    cout << "number of instructions: " << gir.ir.size() << endl;
 
     return 0;
 }
