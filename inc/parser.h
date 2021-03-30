@@ -14,9 +14,10 @@ const int PARSE_TYPE_MOV     = 3; // all move operations
 const int PARSE_TYPE_JMP     = 4; // branches
 
 // internal mov type flags
-const int PARSE_INTERNAL_MOV_LOAD     = 0; // mov mem to register
-const int PARSE_INTERNAL_MOV_STORE    = 1; // mov register to mem
-const int PARSE_INTERNAL_MOV_LOAD_IMM = 2; // mov immediate to register
+const int PARSE_INTERNAL_MOV_RR       = 0; // mov register to register
+const int PARSE_INTERNAL_MOV_LOAD     = 1; // mov mem to register
+const int PARSE_INTERNAL_MOV_STORE    = 2; // mov register to mem
+const int PARSE_INTERNAL_MOV_LOAD_IMM = 3; // mov immediate to register
 
 // internal jmp type flags
 const int PARSE_INTERNAL_JMP_REL     = 0; // conditional short branch

@@ -178,9 +178,8 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
             }
             break;
 
-        case state_add:
-            if(parse_add(gir, src, tok, pir)) { state_current = state_default; }
-            break;
+        case state_add: if(parse_add(gir, src, tok, pir)) { state_current = state_default; } break;
+        case state_mov: if(parse_mov(gir, src, tok, pir)) { state_current = state_default; } break;
 
         //case state_or:
         //    if(parse_or(gir, src, tok, pir)) { state_current = state_default; }
@@ -192,6 +191,133 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
                 tok.str(src) + "' of type '" + tok.typestr() + "'.",
                 tok.idxstart
             });
+    }
+
+}
+
+static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir) {
+    //
+    // mov rd, rs        PARSE_INTERNAL_MOV_RR
+    // mov rd, [rs]      PARSE_INTERNAL_MOV_LOAD
+    // mov [rd], rs      PARSE_INTERNAL_MOV_STORE
+    // mov rd, 0xFFFF    PARSE_INTERNAL_MOV_LOAD_IMM
+    //
+    //                     --> reg
+    //                     |
+    // mov ---> reg -----> , ---> [ --> reg --> ]
+    //  |                  |
+    //  |                  --> num
+    //  |
+    //  --> [ ---> reg --> ] --> , --> reg
+    //
+
+    const int state_rd_expect_reg_or_openbr            = 0; // dest expect either opening bracket or register reference
+
+    const int state_rd_reg_expect_comma                = 1; // dest is register, expect comma
+    const int state_rd_reg_expect_reg_or_openbr_or_num = 2;
+    const int state_rd_reg_rs_expect_reg               = 3;
+    const int state_rd_reg_rs_expect_closebr           = 4;
+
+    const int state_rd_mem_expect_reg                  = 5;
+    const int state_rd_mem_expect_closebr              = 6;
+    const int state_rd_mem_expect_comma                = 7;
+    const int state_rd_mem_rs_expect_reg               = 8;
+
+    static int state_current = state_rd_expect_reg_or_openbr;
+
+    switch(state_current) {
+        case state_rd_expect_reg_or_openbr:
+            pir.type = PARSE_TYPE_MOV;
+            if(tok.type == token_register) {
+                int rd = register_refs.at(tok.str(src));
+                state_current = state_rd_reg_expect_comma;
+                pir.mov.rd = rd;
+            }
+            else if(tok.type == token_openbr) {
+                state_current = state_rd_mem_expect_reg;
+                pir.mov.type = PARSE_INTERNAL_MOV_STORE;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_reg_expect_comma:
+            if(tok.type == token_comma) {
+                state_current = state_rd_reg_expect_reg_or_openbr_or_num;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_reg_expect_reg_or_openbr_or_num:
+            if(tok.type == token_register) {
+                // DONE
+                pir.mov.type = PARSE_INTERNAL_MOV_RR;
+            }
+            else if(tok.type == token_openbr) {
+                state_current = state_rd_reg_rs_expect_reg;
+                pir.mov.type = PARSE_INTERNAL_MOV_LOAD;
+            }
+            else if(token_is_number_type(tok)) {
+                // DONE
+                pir.mov.type = PARSE_INTERNAL_MOV_LOAD_IMM;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_reg_rs_expect_reg:
+            if(tok.type == token_register) {
+                state_current = state_rd_reg_rs_expect_closebr;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_reg_rs_expect_closebr:
+            if(tok.type == token_closebr) {
+                // DONE
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_mem_expect_reg:
+            if(tok.type == token_register) {
+                state_current = state_rd_mem_expect_closebr;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_mem_expect_closebr:
+            if(tok.type == token_closebr) {
+                state_current = state_rd_mem_expect_comma;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_mem_expect_comma:
+            if(tok.type == token_comma) {
+                state_current = state_rd_mem_rs_expect_reg;
+            }
+            else {
+                // ERROR
+            }
+            break;
+        case state_rd_mem_rs_expect_reg:
+            if(tok.type == token_register) {
+                // DONE
+            }
+            else {
+                // ERROR
+            }
+            break;
+        default:
+            // ERROR
+            break;
+        
     }
 
 }
