@@ -227,43 +227,52 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
 
     switch(state_current) {
         case state_rd_expect_reg_or_openbr:
-            pir.type = PARSE_TYPE_MOV;
             if(tok.type == token_register) {
                 int rd = register_refs.at(tok.str(src));
                 state_current = state_rd_reg_expect_comma;
+                pir.type = PARSE_TYPE_MOV;
                 pir.mov.rd = rd;
             }
             else if(tok.type == token_openbr) {
                 state_current = state_rd_mem_expect_reg;
+                pir.type = PARSE_TYPE_MOV;
                 pir.mov.type = PARSE_INTERNAL_MOV_STORE;
             }
             else {
-                // ERROR
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register' or 'OpenBracket');
             }
             break;
         case state_rd_reg_expect_comma:
             if(tok.type == token_comma) {
                 state_current = state_rd_reg_expect_reg_or_openbr_or_num;
             }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Comma' or 'Register');
             break;
         case state_rd_reg_expect_reg_or_openbr_or_num:
             if(tok.type == token_register) {
-                // DONE
+                // DONE (*)
+                state_current = state_rd_expect_reg_or_openbr;
+                int rs = register_refs.at(tok.str(src));
                 pir.mov.type = PARSE_INTERNAL_MOV_RR;
+                pir.mov.rs = rs;
+                gir.ir.push_back(pir);
             }
             else if(tok.type == token_openbr) {
                 state_current = state_rd_reg_rs_expect_reg;
                 pir.mov.type = PARSE_INTERNAL_MOV_LOAD;
             }
             else if(token_is_number_type(tok)) {
-                // DONE
+                // DONE (*)
+                state_current = state_rd_expect_reg_or_openbr;
+                long int imm = convert_string_to_long(src, tok);
                 pir.mov.type = PARSE_INTERNAL_MOV_LOAD_IMM;
+                pir.mov.imm = imm & 0xFFFF;
+                gir.ir.push_back(pir);
             }
             else {
                 // ERROR
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register' or 'OpenBracket' or 'Number*');
             }
             break;
         case state_rd_reg_rs_expect_reg:

@@ -71,7 +71,10 @@ struct ParsedIR {
         struct {
             int type; // one of Parse_type_mov_*
             int rd;
-            int rs;
+            union {
+                int rs;
+                int imm;
+            };
         } mov;
 
         struct {

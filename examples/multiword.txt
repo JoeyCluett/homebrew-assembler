@@ -4,9 +4,11 @@ add r7, 254
 
 add r6, 255
 add r6, 0xFF
-add r6, 0b111111111
+add r6, 0b11111111
 
 add r15, 0x0f
+
+mov ,[r3], 1234
 
 #zx r15, r25
 #or r0, r0

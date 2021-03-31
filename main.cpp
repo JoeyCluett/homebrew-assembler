@@ -14,8 +14,16 @@ int main(int argc, char* argv[]) {
 
     //std::string filename = "examples/helloworld.txt";
     //std::string filename = "examples/memoryops.txt";
-    std::string filename = "examples/multiword.txt";
+    //std::string filename = "examples/multiword.txt";
 
+    std::string filename;
+
+    if(argc == 2) {
+        filename = argv[1];
+    }
+    else {
+        filename = "examples/multiword.txt";
+    }
 
     auto vchar  = read_file(filename);
     //cout.write(vchar.data(), vchar.size());

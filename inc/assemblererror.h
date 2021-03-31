@@ -3,6 +3,14 @@
 #include <string>
 #include <vector>
 
+// yes, yes, abuse the preprocessor!
+#define PARSE_EXCEPTION_WRONG_TOKEN_TYPE(function_name, token, expected_type) \
+    throw ParseException({ \
+        #function_name " : unexpected token '" + token.str(src) + "' of type '" + token.typestr() + \
+        "'. Expecting token of type " #expected_type ".", \
+        token.idxstart \
+    })
+
 struct TokenizeException {
     std::string message;
     long int offset;

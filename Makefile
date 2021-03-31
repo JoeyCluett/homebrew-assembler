@@ -6,8 +6,11 @@
 #
 # final executable
 #
-main: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
+main: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o main.cpp
 	g++ -o main main.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
+
+test: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o test.cpp
+	g++ -o test test.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
 
 #
 # remove existing object files
