@@ -48,6 +48,6 @@ function run_test {
 
 declare -A t0=( [src]="mov_fail_rd_not_reg_or_br.txt" [res]="$ErrParse" ) && run_test t0
 declare -A t1=( [src]="mov_fail_rd_opbr_not_reg.txt" [res]="$ErrParse" ) && run_test t1
-declare -A t1=( [src]="mov_fail_rd_reg_not_comma.txt" [res]="$ErrParse" ) && run_test t1
+declare -A t2=( [src]="mov_fail_rd_reg_not_comma.txt" [res]="$ErrParse" ) && run_test t2
 
 echo ""

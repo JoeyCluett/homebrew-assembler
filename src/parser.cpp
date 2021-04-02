@@ -185,12 +185,7 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
         //    if(parse_or(gir, src, tok, pir)) { state_current = state_default; }
 
         default:
-            //throw std::runtime_error("consume_token : unknown internal error");
-            throw ParseException({
-                "consume_token : Unknown internal error. Last token received was '" + 
-                tok.str(src) + "' of type '" + tok.typestr() + "'.",
-                tok.idxstart
-            });
+            PARSE_EXCEPTION_UNKNOWN_ERROR(consume_token, tok);
     }
 
 }
@@ -226,11 +221,11 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
     static int state_current = state_rd_expect_reg_or_openbr;
 
     switch(state_current) {
-        case state_rd_expect_reg_or_openbr:
+        case state_rd_expect_reg_or_openbr: // mov *reg|[*
             if(tok.type == token_register) {
                 int rd = register_refs.at(tok.str(src));
                 state_current = state_rd_reg_expect_comma;
-                pir.type = PARSE_TYPE_MOV;
+                pir.type = PARSE_TYPE_MOV; // all move instructions are of type 'mov'
                 pir.mov.rd = rd;
             }
             else if(tok.type == token_openbr) {
@@ -238,18 +233,17 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 pir.type = PARSE_TYPE_MOV;
                 pir.mov.type = PARSE_INTERNAL_MOV_STORE;
             }
-            else {
+            else
                 PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register' or 'OpenBracket');
-            }
             break;
-        case state_rd_reg_expect_comma:
+        case state_rd_reg_expect_comma: // mov reg *,*
             if(tok.type == token_comma) {
                 state_current = state_rd_reg_expect_reg_or_openbr_or_num;
             }
             else
                 PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Comma' or 'Register');
             break;
-        case state_rd_reg_expect_reg_or_openbr_or_num:
+        case state_rd_reg_expect_reg_or_openbr_or_num: // mov reg, *reg|[|num*
             if(tok.type == token_register) {
                 // DONE (*)
                 state_current = state_rd_expect_reg_or_openbr;
@@ -270,63 +264,62 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 pir.mov.imm = imm & 0xFFFF;
                 gir.ir.push_back(pir);
             }
-            else {
-                // ERROR
+            else
                 PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register' or 'OpenBracket' or 'Number*');
-            }
             break;
-        case state_rd_reg_rs_expect_reg:
+        case state_rd_reg_rs_expect_reg: // mov reg, [ *reg*
             if(tok.type == token_register) {
                 state_current = state_rd_reg_rs_expect_closebr;
+                int rs = register_refs.at(tok.str(src));
+                pir.mov.rs = rs;
             }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register');
             break;
-        case state_rd_reg_rs_expect_closebr:
+        case state_rd_reg_rs_expect_closebr: // mov reg, [reg *]*
             if(tok.type == token_closebr) {
                 // DONE
+                state_current = state_rd_expect_reg_or_openbr;
+                gir.ir.push_back(pir);
             }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'CloseBracket');
             break;
-        case state_rd_mem_expect_reg:
-            if(tok.type == token_register) {
+        case state_rd_mem_expect_reg: // mov [ *reg*
+            if(tok.type == token_register)
                 state_current = state_rd_mem_expect_closebr;
-            }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register');
             break;
-        case state_rd_mem_expect_closebr:
-            if(tok.type == token_closebr) {
+        case state_rd_mem_expect_closebr: // mov [reg *]*
+            if(tok.type == token_closebr)
                 state_current = state_rd_mem_expect_comma;
-            }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'CloseBracket');
             break;
-        case state_rd_mem_expect_comma:
-            if(tok.type == token_comma) {
+        case state_rd_mem_expect_comma: // mov [reg] *,*
+            if(tok.type == token_comma)
                 state_current = state_rd_mem_rs_expect_reg;
-            }
-            else {
-                // ERROR
-            }
+            else
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Comma');
             break;
-        case state_rd_mem_rs_expect_reg:
+        case state_rd_mem_rs_expect_reg: // mov [reg], *reg*
             if(tok.type == token_register) {
                 // DONE
+                state_current = state_rd_expect_reg_or_openbr;
+                int rs = register_refs.at(tok.str(src));
+                pir.mov.rs = rs;
+                gir.ir.push_back(pir);
             }
             else {
                 // ERROR
+                PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register');
             }
             break;
         default:
             // ERROR
-            break;
-        
+            PARSE_EXCEPTION_UNKNOWN_ERROR(parse_mov, tok);
+            break;        
     }
 
 }

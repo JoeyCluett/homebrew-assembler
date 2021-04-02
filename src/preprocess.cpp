@@ -63,6 +63,7 @@ std::vector<char> read_file(const std::string& fname) {
     }
 
     fclose(fptr);
+    v.push_back('\n');
     return strip_comments(v);
 }
 

@@ -26,9 +26,9 @@ std::string token_t::typestr(void) const {
         case token_labelspec:   return "LabelSpec";
         case token_openbr:      return "OpenBracket";
         case token_closebr:     return "CloseBracket";
-        case token_number_ord:  return "NumberDec";
-        case token_number_bin:  return "NumberBin";
-        case token_number_hex:  return "NumberHex";
+        case token_number_ord:  return "NumberDecimal";
+        case token_number_bin:  return "NumberBinary";
+        case token_number_hex:  return "NumberHexadecimal";
 
         default:                return "UNKNOWN_TYPE  ";
 

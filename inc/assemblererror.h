@@ -11,6 +11,13 @@
         token.idxstart \
     })
 
+#define PARSE_EXCEPTION_UNKNOWN_ERROR(function_name, token) \
+    throw ParseException({ \
+        #function_name " : Unknown internal error. Last token received was '" + \
+        token.str(src) + "' of type '" + token.typestr() + "'.", \
+        token.idxstart \
+    })
+
 struct TokenizeException {
     std::string message;
     long int offset;

@@ -1,7 +1,5 @@
-#
-# this makefile is meant to be simple and easy to understand
-# this means everything is getting typed out
-#
+
+# simple makefile
 
 #
 # final executable
@@ -9,6 +7,9 @@
 main: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o main.cpp
 	g++ -o main main.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
 
+#
+# executable used for testing
+#
 test: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o test.cpp
 	g++ -o test test.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
 
