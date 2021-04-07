@@ -42,6 +42,7 @@ static std::vector<char> strip_comments(std::vector<char>& v) {
         }
     }
 
+    r.push_back('\n');
     return r;
 }
 

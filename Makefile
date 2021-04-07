@@ -10,8 +10,10 @@ main: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o main.cpp
 #
 # executable used for testing
 #
-test: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o test.cpp
+test: obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o test.cpp test_child.cpp
 	g++ -o test test.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
+	g++ -o test_child test_child.cpp -std=c++11 -march=native -O3 obj/preprocess.o obj/tokenize.o obj/parser.o obj/assemblererror.o
+
 
 #
 # remove existing object files

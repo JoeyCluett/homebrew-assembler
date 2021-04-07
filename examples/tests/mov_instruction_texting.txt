@@ -1,0 +1,47 @@
+
+#
+# mov rd, rs        PARSE_INTERNAL_MOV_RR
+# mov rd, [rs]      PARSE_INTERNAL_MOV_LOAD
+# mov [rd], rs      PARSE_INTERNAL_MOV_STORE
+# mov rd, 0xFFFF    PARSE_INTERNAL_MOV_LOAD_IMM
+#
+#                     --> reg
+#                     |
+# mov ---> reg -----> , ---> [ --> reg --> ]
+#  |                  |
+#  |                  --> num
+#  |
+#  --> [ ---> reg --> ] --> , --> reg
+#
+
+#STARTTEST
+# 9 ErrNone
+mov r0, r1
+mov r2, [r3]
+mov [r4], r5
+mov r6, 0xFF
+mov r6, 255
+mov r6, 0b11111111
+mov r6, 0xF
+mov r6, 1
+mov r6, 0b11110
+
+
+#STARTTEST
+# 8 ErrToken
+movv r0, r1     # mnemonic is spelled wrong
+mov r16, r0     # r16 (dest) is not a valid register identifier
+mov r5, r31     # r31 (src) is not a valid register identifier
+mov r15* r14    # '*' is not a valid character (this may change)
+mov ^ r5, r8    # '^' is not a valid character (this may change)
+mov r4, (r7)    # parantheses '()' should be brackets '[]'
+mov r6, [r9)    # closing parentheses should be '('
+mov r9, 0f7734  # '0f7734' is not a valid numeric type
+
+#STARTTEST
+# 3 ErrNone
+mov r4, r7    # parentheses '()' should be brackets '[]'
+mov r6, [r9)    # closing parentheses should be '('
+mov r9, 0f7734  # '0f7734' is not a valid numeric type
+
+

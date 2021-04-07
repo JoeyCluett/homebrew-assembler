@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <fstream>
+
+#include <assert.h>
 
 #include "inc/preprocess.h"
 #include "inc/tokenize.h"
@@ -9,108 +12,147 @@
 
 using namespace std;
 
-struct arguments_t {
-    struct {
-        string filename; // optional, may also just pass code directly on command line
-        int expected_result;
-    } opts;
+std::string RED = "\033[38;2;255;0;0m";
+std::string GRN = "\033[38;2;0;255;0m";
+std::string BLU = "\033[38;2;0;0;255m";
+std::string YEL = "\033[38;2;255;255;0m";
+std::string MAG = "\033[38;2;255;0;255m";
+std::string CYN = "\033[38;2;0;255;255m";
+std::string RST = "\033[0;00m";
 
-    vector<char> code;
-    string program_name;
-};
+int call_assembler(std::string filename, std::vector<char>& vchar, bool print_on_exception);
+std::string strip_line(std::string s);
+std::vector<std::string> split_line(std::string s);
+std::string to_upper(std::string s);
 
-arguments_t parse_input_arguments(vector<string>& v);
-
-int call_assembler(std::string filename, std::vector<char>& vchar);
+int read_error_code_file(void);
 
 int main(int argc, char* argv[]) {
 
-    // string are more convenient than const char*s
-    std::vector<std::string> arg_strings;
-    for(int i = 0; i < argc; i++) {
-        arg_strings.push_back(argv[i]);
-    }
-
-    arguments_t args = parse_input_arguments(arg_strings);
-
-    if(argc != 3) {
-        cout << "usage:\n  " << argv[0] << " <file_to_test> <expected_result>\n";
+    if(argc < 2) {
+        cout << "\nusage:\n  " << CYN << argv[0] << YEL << " <file_to_test>\n" << RST;
+        cout << "\noptions:\n";
+        cout << CYN << "   --exceptfail     " << RST << ": cause testing program to exit on first failed test\n";
+        cout << CYN << "   --printexcept    " << RST << ": print exception data if/when thrown\n";
+        cout << CYN << "   --printtest      " << RST << ": print instruction being tested\n\n";
         return 1;
     }
 
-    int returned_value = call_assembler(args.opts.filename, args.code);
+    int fail_on_exception      = 0;
+    int print_exception_data   = 0;
+    int print_test_instruction = 0;
 
-    cout << returned_value;
+    std::ifstream input_stream(argv[1], std::ios_base::in);
+    std::string line_contents;
 
-    if(args.opts.expected_result == returned_value)
-        return 0;
-    return 1;
-}
-
-arguments_t parse_input_arguments(vector<string>& v) {
-
-    arguments_t args;
-
-    const int state_program_name = 0;
-    const int state_default      = 1;
-    const int state_inline_code  = 2;
-    const int state_filename     = 3;
-    int state_current = state_program_name;
-
-
-    bool code_inline = false;
-    bool code_in_file = false;
-
-    for(auto& s : v) {
-        switch(state_current) {
-            case state_program_name:
-                args.program_name = s;
-                state_current = state_default;
-            case state_default:
-                if(s == "-c") { // code
-                    state_current = state_inline_code;
-                }
-                else if(s == "-e") { // external file
-                    state_current = 
-                }
-                break;
-            case state_inline_code:
-
-            case state_filename:
-
-
-        }
+    for(int i = 2; i < argc; i++) {
+        std::string arg = argv[i]; 
+        if(arg == "--exceptfail")  fail_on_exception = 1;
+        if(arg == "--printexcept") print_exception_data = 1;
+        if(arg == "--printtest")   print_test_instruction = 1;  
     }
 
-}
+    std::vector<std::string> error_type_lut = {
+        "ErrNone",
+        "ErrExcept",
+        "ErrParse",
+        "ErrToken"
+    };
 
-int call_assembler(std::string filename, std::vector<char>& vchar) {
+    while(std::getline(input_stream, line_contents)) {
+        auto s = strip_line(line_contents);
 
-    auto iter = vchar.begin();
+        if(line_contents != "#STARTTEST")
+            continue;
 
-    GeneratedIR gir;
+        std::getline(input_stream, line_contents);
+        auto chunks = split_line(strip_line(line_contents));
 
-    try {
-        try {
-            try {
+        int n_tests = std::stoi(chunks[1]);
+        int err_type = -1;
 
-                auto token = get_token(vchar, iter);
-                while(token.valid_token && iter != vchar.end()) {
-                    consume_token(gir, vchar, token);
-                    token = get_token(vchar, iter);
-                }
+        chunks[2] = to_upper(chunks[2]);
 
-            } catch(ParseException& pe) {
-                return 2;
+        if(chunks[2] == "ERRNONE")        { err_type = 0; }
+        else if(chunks[2] == "ERREXCEPT") { err_type = 1; }
+        else if(chunks[2] == "ERRPARSE")  { err_type = 2; }
+        else if(chunks[2] == "ERRTOKEN")  { err_type = 3; }
+
+        assert(err_type > -1);
+
+        std::cout << MAG <<  "Performing " << YEL << n_tests << MAG << " tests\n" << RST;
+
+        for(int i = 0; i < n_tests; i++) {
+            std::getline(input_stream, line_contents);
+            auto test_string = strip_line(line_contents);
+
+            if(print_test_instruction)
+                std::cout << test_string << std::endl << std::flush;
+
+            std::ofstream ofile("test_script.txt", std::ios_base::out);
+            ofile << test_string << std::endl << std::flush;
+            ofile.close();
+
+            std::string cmd = "./test_child test_script.txt " + std::to_string(print_exception_data);
+            (void)system(cmd.c_str());
+            int returned_value = read_error_code_file();
+
+            if(returned_value == err_type) {
+                std::cout << GRN << "PASS" << RST << " : expected " << YEL << error_type_lut.at(err_type) 
+                << RST << " got " << YEL << error_type_lut.at(returned_value) << RST << std::endl;
             }
-        } catch(TokenizeException& te) {
-            return 3;
+            else {
+                std::cout << RED << "FAIL" << RST << " : expected " << YEL << error_type_lut.at(err_type) 
+                << RST << " got " << YEL << error_type_lut.at(returned_value) << RST << std::endl;
+
+                if(fail_on_exception)
+                    return 1;
+            }
         }
-    } catch(std::exception& ex) {
-        cerr << "test generated std::runtime_error" << endl;
-        return 1;
     }
 
     return 0;
 }
 
+int read_error_code_file(void) {
+    std::ifstream ifile("assembly_error_output.txt", std::ios_base::in);
+    int err;
+    ifile >> err;
+    ifile.close();
+    return err;
+}
+
+std::string to_upper(std::string s) {
+    for(int i = 0; i < s.size(); i++) {
+        if(s[i] >= 'a' && s[i] <= 'z') {
+            s[i] -= 32;
+        }
+    }
+
+    return s;
+}
+
+std::string strip_line(std::string s) {
+    while(s.back() == '\n' || s.back() == '\r')
+        s.pop_back();
+
+    return s;
+}
+
+std::vector<std::string> split_line(std::string s) {
+    std::vector<std::string> chks;
+    std::string tmp;
+
+    for(char c : s) {
+        if(c == ' ') {
+            chks.push_back(tmp);
+            tmp.clear();
+        }
+        else {
+            tmp.push_back(c);
+        }
+    }
+
+    chks.push_back(tmp);
+    return chks;
+}

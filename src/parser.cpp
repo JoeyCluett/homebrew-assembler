@@ -251,6 +251,7 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 pir.mov.type = PARSE_INTERNAL_MOV_RR;
                 pir.mov.rs = rs;
                 gir.ir.push_back(pir);
+                return true;
             }
             else if(tok.type == token_openbr) {
                 state_current = state_rd_reg_rs_expect_reg;
@@ -263,6 +264,7 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 pir.mov.type = PARSE_INTERNAL_MOV_LOAD_IMM;
                 pir.mov.imm = imm & 0xFFFF;
                 gir.ir.push_back(pir);
+                return true;
             }
             else
                 PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'Register' or 'OpenBracket' or 'Number*');
@@ -281,6 +283,7 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 // DONE
                 state_current = state_rd_expect_reg_or_openbr;
                 gir.ir.push_back(pir);
+                return true;
             }
             else
                 PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_mov, tok, 'CloseBracket');
@@ -310,6 +313,7 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
                 int rs = register_refs.at(tok.str(src));
                 pir.mov.rs = rs;
                 gir.ir.push_back(pir);
+                return true;
             }
             else {
                 // ERROR
@@ -322,6 +326,7 @@ static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
             break;        
     }
 
+    return false;
 }
 
 static bool parse_add(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir) {
