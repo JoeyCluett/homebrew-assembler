@@ -4,6 +4,14 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 main
+test
+test_child
+err.txt
+tmp.txt
+tokens.txt
+assembly_error_output.txt
+test_output.txt
+
 
 .vscode/
 

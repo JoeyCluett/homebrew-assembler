@@ -1,0 +1,35 @@
+
+
+.export @mult_u8
+
+
+#
+# a0 = multiplicand (and result)
+# a1 = multiplier
+#
+@mult_u8
+    zero t0
+    mov t1, 0x01  # load '1' as test bit
+    zx t1, t1     # zero extend bit test register
+    zx a0, a0     # zero extend first argument
+    zx a1, a1     # zero extend second argument
+    mov t2, 8     # need to perform the loop 8 times
+
+  @mult_u8_loop
+
+    mov t3, t1       # prep for bit test
+    and .byte t3, a0 # extract bit from a0
+
+    jmp .Z @mult_u8_afterthought
+    add t0, a1       # running sum
+
+  @mult_u8_afterthought
+    shl t1, t1  # prep for next bit test
+    shl a1, a1  # prep for next partial sum
+    dec t2
+    finv  # invert flags reg.
+    jmp .Z @mult_u8_loop
+
+    # move final result into return register
+    mov a0, t0
+    ret

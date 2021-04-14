@@ -113,6 +113,9 @@ static bool parse_cmp(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
 static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
 static bool parse_jmp(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
 
+// many opcodes share the same argument types and patterns
+static bool parse_optbyte_reg_reg(std::vector<char>& src, token_t tok, int& uses_byte, int& d_reg, int& s_reg);
+
 void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
 
     static ParsedIR pir;
@@ -141,27 +144,27 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
     static int state_current = state_default;
 
     static const std::map<std::string, const int> keyword_state_xlat = {
-        { "add", state_add }, // DONE
-        { "adc", state_adc },
-        { "sub", state_sub },
-        { "sbb", state_sbb },
-        { "or",  state_or },
-        { "and", state_and },
-        { "xor", state_xor },
-        { "not", state_not },
-        { "inc", state_inc },
-        { "dec", state_dec },
-        { "rsh", state_rsh },
-        { "lsh", state_lsh },
-        { "sx",          state_sx },
-        { "sign_ext",    state_sx },
-        { "zx",          state_zx },
-        { "zero_extend", state_zx },
+        { "add",         state_add }, // DONE
+        { "adc",         state_adc },
+        { "sub",         state_sub },
+        { "sbb",         state_sbb },
+        { "or",          state_or  },
+        { "and",         state_and },
+        { "xor",         state_xor },
+        { "not",         state_not },
+        { "inc",         state_inc },
+        { "dec",         state_dec },
+        { "rsh",         state_rsh },
+        { "lsh",         state_lsh },
+        { "sx",          state_sx  },
+        { "sign_ext",    state_sx  },
+        { "zx",          state_zx  },
+        { "zero_extend", state_zx  },
         { "cmp",         state_cmp },
-        { "mov",  state_mov },
-        { "move", state_mov },
-        { "jmp",  state_jmp },
-        { "jump", state_jmp },
+        { "mov",         state_mov }, // DONE
+        { "move",        state_mov },
+        { "jmp",         state_jmp },
+        { "jump",        state_jmp },
     };
 
     switch(state_current) {
@@ -186,6 +189,66 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
 
         default:
             PARSE_EXCEPTION_UNKNOWN_ERROR(consume_token, tok);
+    }
+
+}
+
+// many opcodes share the same argument types and patterns
+static bool parse_optbyte_reg_reg(std::vector<char>& src, token_t tok, int& uses_byte, int& rd, int& rs) {
+    //                     rd               rs 
+    // opc --------------> REG --> , -----> REG
+    //       |              ^
+    //       ---> .byte ----|
+    //
+
+    const int state_reg_or_bytespec = 0;
+    const int state_reg_follow      = 1;
+    const int state_comma           = 2;
+    const int state_reg_last        = 3;
+
+    static int state_current = state_reg_or_bytespec;
+
+    switch(state_current) {
+        case state_reg_or_bytespec:
+            if(tok.type == token_register) {
+                rd = register_refs.at(tok.str(src));
+                uses_byte = 0;
+                state_current = state_comma;
+                return false;
+            }
+            else if(tok.type == token_bytespec) {
+                uses_byte = 1;
+                state_current = state_reg_follow;
+                return false;
+            }
+            else {
+                throw std::runtime_error("invalid token " + tok.str(src));
+            }
+        case state_reg_follow:
+            if(tok.type == token_register) {
+                rd = register_refs.at(tok.str(src));
+                state_current = state_comma;
+            }
+            else {
+                throw std::runtime_error("invalid token " + tok.str(src));
+            }
+        case state_comma:
+            if(tok.type == token_comma) {
+                state_current = state_reg_last;
+            }
+            else {
+                throw std::runtime_error("invalid token " + tok.str(src));
+            }
+        case state_reg_last:
+            if(tok.type == token_register) {
+                rs = register_refs.at(tok.str(src));
+                state_current = state_reg_or_bytespec;
+            }
+            else {
+                throw std::runtime_error("invalid token " + tok.str(src));
+            }
+        default:
+            throw std::runtime_error("unknown internal error");
     }
 
 }

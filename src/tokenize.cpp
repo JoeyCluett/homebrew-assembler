@@ -142,7 +142,7 @@ token_t get_token(std::vector<char>& src, std::vector<char>::iterator& iter) {
                 break;
 
             case state_word:
-                // may not need to test for '_'
+                // wait for a regular word boundary
                 if(is_alphanum(c) || c == '_') {
                     char_buffer.push_back(c);
                     iter++;
@@ -203,6 +203,14 @@ token_t get_token(std::vector<char>& src, std::vector<char>::iterator& iter) {
                         tok.idxend = tok.idxstart + char_buffer.size();
                         tok.valid_token = true;
                         tok.type = token_flagspec;
+                        char_buffer.clear();
+                        return tok;
+                    }
+                    else if(char_buffer == ".export") {
+                        tok.idxstart = (int)(token_start_loc - src.begin());
+                        tok.idxend = tok.idxstart + char_buffer.size();
+                        tok.valid_token = true;
+                        tok.type = token_exportspec;
                         char_buffer.clear();
                         return tok;
                     }

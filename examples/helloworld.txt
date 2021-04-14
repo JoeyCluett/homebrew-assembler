@@ -1,5 +1,14 @@
 
 #
+# dot-keywords:
+#
+# .byte   - specifies that the operation should be done on the LSB of the operand registers
+# .ZCFO   - flag specifiers. each letter refers to flag bit. each is optional. empty flags means unconditioal jump
+# .export - places given label in the global namespace
+#
+
+
+#
 # family-0 ALU operations:
 #
 # 16-bit instructions
@@ -11,7 +20,7 @@
 #
 
     nop       # alias for 'mov r0, r0'
-    zero r5   # expands to 'xor r5, r5'
+    zero r5   # expands to 'xor r5, r5', also use 'zero .byte r5'
 
     add r0,  r12   # r0  = r0  + r12
     adc r5,  r0    # r5  = r5  + r0 + CF
@@ -29,8 +38,10 @@
 
     sign_ext r2, r1  # sign extend r1.LSB into r2
     sx r2, r1        # sign extend r1.LSB into r2 (alias of sign_ext)
+    se r2, r1        # sign extend r1.LSB into r2 (alias of sign_ext)
     zero_ext r8, r2  # zero extend r2.LSB into r8
     zx r8, r2        # zero extend r2.LSB into r8 (alias of zero_ext)
+    ze r8, r2        # zero extend r2.LSB into r8 (alias of zero_ext)
 
 # similar to above instructions but performed on the LSB of each register
     add .byte r0,  r12     # r0  = r0  + r12

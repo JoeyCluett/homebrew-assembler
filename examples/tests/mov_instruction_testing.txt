@@ -26,6 +26,14 @@ mov r6, 0xF
 mov r6, 1
 mov r6, 0b11110
 
+#STARTTEST
+# 6 ErrParse
+mov r6, 0x1FF                  # immediate too large
+mov r6, 256                    # ...
+mov r6, 0b100000000            # ...
+mov r6, 0xFFFFF                # ...
+mov r6, 3485                   # ...
+mov r6, 0b1111111111100000000  # ...
 
 #STARTTEST
 # 8 ErrToken
@@ -38,10 +46,9 @@ mov r4, (r7)    # parantheses '()' should be brackets '[]'
 mov r6, [r9)    # closing parentheses should be '('
 mov r9, 0f7734  # '0f7734' is not a valid numeric type
 
-#STARTTEST
-# 3 ErrNone
-mov r4, r7    # parentheses '()' should be brackets '[]'
-mov r6, [r9)    # closing parentheses should be '('
-mov r9, 0f7734  # '0f7734' is not a valid numeric type
 
+#STARTTEST
+# 2 ErrNone
+movv r0, r1     # mnemonic is spelled wrong
+mov r16, r0     # r16 (dest) is not a valid register identifier
 

@@ -1,5 +1,0 @@
-
-opcode  
-0x0n       16-bit ALU operation
-n=
-    0 = 

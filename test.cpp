@@ -24,8 +24,8 @@ int call_assembler(std::string filename, std::vector<char>& vchar, bool print_on
 std::string strip_line(std::string s);
 std::vector<std::string> split_line(std::string s);
 std::string to_upper(std::string s);
-
 int read_error_code_file(void);
+void print_testing_results(int passed, int failed, int total);
 
 int main(int argc, char* argv[]) {
 
@@ -41,6 +41,10 @@ int main(int argc, char* argv[]) {
     int fail_on_exception      = 0;
     int print_exception_data   = 0;
     int print_test_instruction = 0;
+
+    int total_failed_tests = 0;
+    int total_passed_tests = 0;
+    int total_tests = 0;
 
     std::ifstream input_stream(argv[1], std::ios_base::in);
     std::string line_contents;
@@ -80,7 +84,7 @@ int main(int argc, char* argv[]) {
 
         assert(err_type > -1);
 
-        std::cout << MAG <<  "Performing " << YEL << n_tests << MAG << " tests\n" << RST;
+        std::cout << MAG <<  "Performing " << YEL << n_tests << MAG << " tests\n" << RST << std::flush;
 
         for(int i = 0; i < n_tests; i++) {
             std::getline(input_stream, line_contents);
@@ -94,24 +98,39 @@ int main(int argc, char* argv[]) {
             ofile.close();
 
             std::string cmd = "./test_child test_script.txt " + std::to_string(print_exception_data);
-            (void)system(cmd.c_str());
+            int _ = system(cmd.c_str());
             int returned_value = read_error_code_file();
 
             if(returned_value == err_type) {
                 std::cout << GRN << "PASS" << RST << " : expected " << YEL << error_type_lut.at(err_type) 
                 << RST << " got " << YEL << error_type_lut.at(returned_value) << RST << std::endl;
+
+                total_passed_tests++;
+                total_tests++;
             }
             else {
                 std::cout << RED << "FAIL" << RST << " : expected " << YEL << error_type_lut.at(err_type) 
                 << RST << " got " << YEL << error_type_lut.at(returned_value) << RST << std::endl;
 
-                if(fail_on_exception)
+                total_failed_tests++;
+                total_tests++;
+
+                if(fail_on_exception) {
+                    print_testing_results(total_passed_tests, total_failed_tests, total_tests);
                     return 1;
+                }
             }
         }
     }
 
+    print_testing_results(total_passed_tests, total_failed_tests, total_tests);
     return 0;
+}
+
+void print_testing_results(int passed, int failed, int total) {
+    std::cout << CYN << "\nTotal tests performed: " << RST << total << std::endl << std::flush;
+    std::cout << GRN << "    Passed: " << RST << passed << std::endl << std::flush;
+    std::cout << RED << "    Failed: " << RST << failed << std::endl << std::flush;
 }
 
 int read_error_code_file(void) {

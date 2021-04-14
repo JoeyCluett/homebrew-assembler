@@ -1,0 +1,56 @@
+
+.export @shift_right
+
+#
+# a0 = base value
+# a1 = shift amount
+#
+@shift_right # right shift for shifts greater than 1 bit
+    mov t0, 0b11110000
+    and t0, a1      # test if shift amount is greater than 15
+    jmp .Z @shift_right_test_bit_3
+    zero a0         # return 0 if shft amt greater than 15
+    ret
+
+  @shift_right_test_bit_3
+    mov t0, 0b00001000
+    and t0, a1
+    jmp .Z @shift_right_test_bit_2
+    call @shift_right_8_bits
+
+  @shift_right_test_bit_2
+    mov t0, 0b00000100
+    and t0, a1
+    jmp .Z @shift_right_test_bit_1
+    call @shift_right_4_bits
+
+  @shift_right_test_bit_1
+    mov t0, 0b00000010
+    and t0, a1
+    jmp .Z @shift_right_test_bit_0
+    call @shift_right_2_bits
+
+  @shift_right_test_bit_0
+    mov t0, 0b00000001
+    and t0, a1
+    jmp .Z @shift_right_end
+    shr a0, a0
+
+  @shift_right_end
+    ret
+
+@shift_right_8_bits
+    call @shift_right_4_bits
+    call @shift_right_4_bits
+    ret
+
+@shift_right_4_bits
+    call @shift_right_2_bits
+    call @shift_right_2_bits
+    ret
+
+@shift_right_2_bits
+    shr a0, a0
+    shr a0, a0
+    ret
+
