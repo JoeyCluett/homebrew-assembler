@@ -1,0 +1,13 @@
+
+#
+# collection of short programs to test multi-line tokenize/parse sequences
+#
+
+#STARTPROGRAM
+@start_label
+    nop
+    zero r0
+    add r0, r7
+    add r3, r8
+#ENDPROGRAM
+

@@ -89,8 +89,8 @@ struct ParsedIR {
 struct GeneratedIR {
 
     // when the parse run is over, both of these should be filled out
-    std::map<std::string, int> label_to_target;
-    std::map<int, std::string> target_to_label;
+    std::map<std::string, int> label_to_jump_target_map;
+    std::map<int, std::string> jump_target_to_label_map;
 
     // not used yet, but will be
     std::unordered_set<std::string> exported_targets;

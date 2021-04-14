@@ -1,0 +1,1 @@
+zero nop      # nop is an invalid operand for zero instruction

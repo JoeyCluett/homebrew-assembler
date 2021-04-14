@@ -57,6 +57,17 @@
     lsh .byte r9,  r13     # r9  = r13 << 1
     rsh .byte r13, r0      # r13 = r0  >> 1
 
+# instructions with "(.byte) reg, reg" argument types
+adc
+or
+and
+xor
+not
+inc
+dec
+lsh
+rsh
+
 @file_end
 
 

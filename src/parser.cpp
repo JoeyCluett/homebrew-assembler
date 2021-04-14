@@ -113,6 +113,10 @@ static bool parse_cmp(GeneratedIR& gir, std::vector<char>& src, token_t tok, Par
 static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
 static bool parse_jmp(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
 
+// alias type instructions
+static bool parse_zero(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir);
+// nop is parsed in place by top-level parse function
+
 // many opcodes share the same argument types and patterns
 static bool parse_optbyte_reg_reg(std::vector<char>& src, token_t tok, int& uses_byte, int& d_reg, int& s_reg);
 
@@ -140,6 +144,7 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
     const int state_cmp     = 15;
     const int state_mov     = 16;
     const int state_jmp     = 17;
+    const int state_zero    = 18; // alias for xor rN, rN
 
     static int state_current = state_default;
 
@@ -162,9 +167,11 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
         { "zero_extend", state_zx  },
         { "cmp",         state_cmp },
         { "mov",         state_mov }, // DONE
-        { "move",        state_mov },
+        { "move",        state_mov }, // DONE
         { "jmp",         state_jmp },
         { "jump",        state_jmp },
+        // { "nop",         not needed }
+        { "zero",        state_zero }, // DONE
     };
 
     switch(state_current) {
@@ -173,10 +180,36 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
             {
                 auto str = tok.str(src);
                 if(tok.type == token_instruction) {
-                    auto keyword_iter = keyword_state_xlat.find(str);
-                    if(keyword_iter != keyword_state_xlat.end()) {
-                        state_current = keyword_iter->second;
+
+                    if(tok.str(src) == "nop") { // mov r0, r0
+                        pir.type = PARSE_TYPE_MOV;
+                        pir.mov.rd = 0;
+                        pir.mov.rs = 0;
+                        pir.mov.type = PARSE_INTERNAL_MOV_RR;
+                        gir.ir.push_back(pir);
                     }
+                    else {
+                        auto keyword_iter = keyword_state_xlat.find(str);
+                        if(keyword_iter != keyword_state_xlat.end()) {
+                            state_current = keyword_iter->second;
+                        }
+                    }
+                }
+                else if(tok.type == token_labelspec) {
+                    auto iter = gir.label_to_jump_target_map.find(tok.str(src));
+                    if(iter != gir.label_to_jump_target_map.end()) {
+                        throw ParseException({
+                            "consume_token : label '" + tok.str(src) + "' already exists in local jump table.", 
+                            tok.idxstart
+                        });
+                    }
+
+                    // the location calculated here is an abstract offset NOT A WORD OFFSET FOR COMPILED CODE
+                    // actual code generation (and offset calculation) happens later
+                    gir.label_to_jump_target_map.insert({ tok.str(src), gir.ir.size() });
+                }
+                else {
+                    PARSE_EXCEPTION_WRONG_TOKEN_TYPE(consume_token, tok, 'Instruction' or 'LabelSpec');
                 }
             }
             break;
@@ -184,8 +217,9 @@ void consume_token(GeneratedIR& gir, std::vector<char>& src, token_t tok) {
         case state_add: if(parse_add(gir, src, tok, pir)) { state_current = state_default; } break;
         case state_mov: if(parse_mov(gir, src, tok, pir)) { state_current = state_default; } break;
 
-        //case state_or:
-        //    if(parse_or(gir, src, tok, pir)) { state_current = state_default; }
+        //case state_or: if(parse_or(gir, src, tok, pir)) { state_current = state_default; } break;
+
+        case state_zero: if(parse_zero(gir, src, tok, pir)) { state_current = state_default; } break;
 
         default:
             PARSE_EXCEPTION_UNKNOWN_ERROR(consume_token, tok);
@@ -251,6 +285,22 @@ static bool parse_optbyte_reg_reg(std::vector<char>& src, token_t tok, int& uses
             throw std::runtime_error("unknown internal error");
     }
 
+}
+
+static bool parse_zero(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir) {
+
+    if(tok.type != token_register) {
+        PARSE_EXCEPTION_WRONG_TOKEN_TYPE(parse_zero, tok, 'Register');
+    }
+
+    int rN = register_refs.at(tok.str(src));
+
+    pir.type = PARSE_TYPE_ALU_STD;
+    pir.alu_std.rd = rN;
+    pir.alu_std.rs = rN;
+    pir.alu_std.op = PARSE_INTERNAL_ALU_OP_XOR;
+    gir.ir.push_back(pir);
+    return true;
 }
 
 static bool parse_mov(GeneratedIR& gir, std::vector<char>& src, token_t tok, ParsedIR& pir) {

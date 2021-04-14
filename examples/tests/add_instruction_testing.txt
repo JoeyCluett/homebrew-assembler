@@ -1,10 +1,45 @@
 #
-#
+# add r0, r7
+# add .byte r9, r15
+# add r8, 0b00001111
+# add r12, 0x38
+# add r3, 26
 #
 #                     rd               rs 
 # add --------------> REG --> , -----> REG
 #       |              ^      |
 #       ---> .byte ----|      ---> NUMBER
 #
+
+#STARTTEST
+# 5 ErrNone
+add r0, r7
+add .byte r9, r15
+add r8, 0b00001111
+add r12, 0x38
+add r3, 26
+
+#STARTTEST
+# 8 ErrParse
+add r8, 0b111100000   # immediate too large
+add r12, 0x380        # ...
+add r3, 256           # ...
+add .byte r8, 0b00001111    # cant add imm with .byte specifier
+add .byte r12, 0x38         # ...
+add .byte r3, 26            # ...
+add r5, .byte r9     # .byte specifier misplaced
+add .CZ r6, r10      # using flag specifier, meant to use byte specifier
+
+#STARTTEST
+# 8 ErrToken
+addd r5, r13     # mnemonic spelled wrong
+add r16, r0      # invalid destination register
+add r17, r15     # invalid source register
+add .byta r5, r9     # .byte specifier spelled incorrectly
+add .byt r5, r9      # ...
+add r5, .byts r9     # ...
+add r5, .bytt r9     # ...
+addc r3, r0     # most likely meant to use adc opcode
+
 
 

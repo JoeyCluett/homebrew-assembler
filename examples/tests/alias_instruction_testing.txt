@@ -1,0 +1,31 @@
+#
+# alias instructions evaluate to actual instructions
+#
+#
+# zero r7  ==> xor r7, r7
+# nop      ==> mov r0, r0
+#
+
+
+#STARTTEST
+# 5 ErrNone
+nop
+nop
+zero r0
+nop
+zero r9
+
+
+#STARTTEST
+# 3 ErrToken
+nope       # misspelled nop
+zera r7    # misspelled zero
+zero r16   # invalid source register
+
+
+#STARTTEST
+# 2 ErrParse
+zero r8 r15   # zero instruction has only one register operand
+zero nop      # nop is an invalid operand for zero instruction
+
+

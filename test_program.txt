@@ -1,0 +1,125 @@
+
+#
+# mov rd, rs        PARSE_INTERNAL_MOV_RR
+# mov rd, [rs]      PARSE_INTERNAL_MOV_LOAD
+# mov [rd], rs      PARSE_INTERNAL_MOV_STORE
+# mov rd, 0xFFFF    PARSE_INTERNAL_MOV_LOAD_IMM
+#
+#                     --> reg
+#                     |
+# mov ---> reg -----> , ---> [ --> reg --> ]
+#  |                  |
+#  |                  --> num
+#  |
+#  --> [ ---> reg --> ] --> , --> reg
+#
+
+#STARTTEST
+# 9 ErrNone
+mov r0, r1
+mov r2, [r3]
+mov [r4], r5
+mov r6, 0xFF
+mov r6, 255
+mov r6, 0b11111111
+mov r6, 0xF
+mov r6, 1
+mov r6, 0b11110
+
+#STARTTEST
+# 6 ErrParse
+mov r6, 0x1FF                  # immediate too large
+mov r6, 256                    # ...
+mov r6, 0b100000000            # ...
+mov r6, 0xFFFFF                # ...
+mov r6, 3485                   # ...
+mov r6, 0b1111111111100000000  # ...
+
+#STARTTEST
+# 8 ErrToken
+movv r0, r1     # mnemonic is spelled wrong
+mov r16, r0     # r16 (dest) is not a valid register identifier
+mov r5, r31     # r31 (src) is not a valid register identifier
+mov r15* r14    # '*' is not a valid character (this may change)
+mov ^ r5, r8    # '^' is not a valid character (this may change)
+mov r4, (r7)    # parantheses '()' should be brackets '[]'
+mov r6, [r9)    # closing parentheses should be '('
+mov r9, 0f7734  # '0f7734' is not a valid numeric type
+
+
+#
+# add r0, r7
+# add .byte r9, r15
+# add r8, 0b00001111
+# add r12, 0x38
+# add r3, 26
+#
+#                     rd               rs 
+# add --------------> REG --> , -----> REG
+#       |              ^      |
+#       ---> .byte ----|      ---> NUMBER
+#
+
+#STARTTEST
+# 5 ErrNone
+add r0, r7
+add .byte r9, r15
+add r8, 0b00001111
+add r12, 0x38
+add r3, 26
+
+#STARTTEST
+# 8 ErrParse
+add r8, 0b111100000   # immediate too large
+add r12, 0x380        # ...
+add r3, 256           # ...
+add .byte r8, 0b00001111    # cant add imm with .byte specifier
+add .byte r12, 0x38         # ...
+add .byte r3, 26            # ...
+add r5, .byte r9     # .byte specifier misplaced
+add .CZ r6, r10      # using flag specifier, meant to use byte specifier
+
+#STARTTEST
+# 8 ErrToken
+addd r5, r13     # mnemonic spelled wrong
+add r16, r0      # invalid destination register
+add r17, r15     # invalid source register
+add .byta r5, r9     # .byte specifier spelled incorrectly
+add .byt r5, r9      # ...
+add r5, .byts r9     # ...
+add r5, .bytt r9     # ...
+addc r3, r0     # most likely meant to use adc opcode
+
+
+
+#
+# alias instructions evaluate to actual instructions
+#
+#
+# zero r7  ==> xor r7, r7
+# nop      ==> mov r0, r0
+#
+
+
+#STARTTEST
+# 5 ErrNone
+nop
+nop
+zero r0
+nop
+zero r9
+
+
+#STARTTEST
+# 3 ErrToken
+nope       # misspelled nop
+zera r7    # misspelled zero
+zero r16   # invalid source register
+
+
+#STARTTEST
+# 2 ErrParse
+zero r8 r15   # zero instruction has only one register operand
+zero nop      # nop is an invalid operand for zero instruction
+
+

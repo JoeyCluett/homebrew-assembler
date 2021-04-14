@@ -47,8 +47,3 @@ mov r6, [r9)    # closing parentheses should be '('
 mov r9, 0f7734  # '0f7734' is not a valid numeric type
 
 
-#STARTTEST
-# 2 ErrNone
-movv r0, r1     # mnemonic is spelled wrong
-mov r16, r0     # r16 (dest) is not a valid register identifier
-
